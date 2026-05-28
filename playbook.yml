@@ -9,7 +9,7 @@
     minecraft_image: "{{ ecr_url }}/{{ ecr_repo_name }}:{{ ecr_image_tag }}"
     mount_data_path: "/home/ubuntu/data"
     world_data_path: "/opt/minecraft/world"
-    motd: "wengor-ops3"
+    motd: "wengor-ops4"
 
   tasks:
     - name: Install Runtime Prerequisites (Docker and AWS CLI)
@@ -45,7 +45,7 @@
         name: "{{ ecr_url }}:{{ ecr_image_tag }}"
         source: pull
 
-    - name: Pull and extra world data backup from S3
+    - name: Pull and extract world data backup from S3
       ansible.builtin.include_role:
         name: backups
       vars:
