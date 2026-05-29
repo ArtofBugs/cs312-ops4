@@ -14,8 +14,13 @@ spec:
             image: amazon/aws-cli:latest # Inherently has AWS CLI
             command: ["/bin/sh", "-c"]
             args:
-              - yum install -y tar && tar -czf /tmp/world-backup.tar.gz /opt/minecraft/world && 
-                aws s3 cp /tmp/world-backup.tar.gz s3://cs312-wengor-minecraft-backups/backups/
+            - |
+              echo "Installing tar utility..."
+              yum install -y tar && \
+              echo "Creating archive..." && \
+              tar -czf /tmp/world-backup.tar.gz -C /opt/minecraft/world . && \
+              echo "Uploading to S3..." && \
+              aws s3 cp /tmp/world-backup.tar.gz s3://cs312-wengor-minecraft-backups/backups/
             volumeMounts:
             - name: minecraft-data
               mountPath: /opt/minecraft/world
