@@ -14,11 +14,11 @@ spec:
             image: amazon/aws-cli:latest # Inherently has AWS CLI
             command: ["/bin/sh", "-c"]
             args:
-              - tar -czf /tmp/world-backup.tar.gz /data/world && 
-                aws s3 cp /tmp/world-backup.tar.gz s3://your-bucket-name/backups/
+              - tar -czf /tmp/world-backup.tar.gz /opt/minecraft/world && 
+                aws s3 cp /tmp/world-backup.tar.gz s3:///cs312-wengor-minecraft-backups/backups/
             volumeMounts:
             - name: minecraft-data
-              mountPath: /data
+              mountPath: /opt/minecraft/world
               readOnly: true
           volumes:
           - name: minecraft-data
