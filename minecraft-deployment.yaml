@@ -23,7 +23,7 @@ spec:
           ports:
             - containerPort: 25565
           volumeMounts:
-            - name: data
+            - name: minecraft-data
               mountPath: /opt/minecraft/world
       volumes:
         - name: minecraft-data
