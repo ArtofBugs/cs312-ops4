@@ -25,7 +25,7 @@ spec:
           volumeMounts:
             - name: data
               mountPath: /opt/minecraft/world
-  volumes:
-    - name: minecraft-data
-      persistentVolumeClaim:
-        claimName: minecraft-pvc
+      volumes:
+        - name: minecraft-data
+          persistentVolumeClaim:
+            claimName: minecraft-pvc
