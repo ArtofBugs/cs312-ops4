@@ -1,68 +1,21 @@
 ---
-- name: Deploy Minecraft Server from ECR
+- name: Set up k3s
   user: ubuntu
   hosts: all
   become: true
-  vars:
-    # Variables - default values
-    aws_region: "us-east-1"
-    minecraft_image: "{{ ecr_url }}/{{ ecr_repo_name }}:{{ ecr_image_tag }}"
-    mount_data_path: "/home/ubuntu/data"
-    world_data_path: "/opt/minecraft/world"
-    motd: "wengor-ops4"
 
   tasks:
-    - name: Install Runtime Prerequisites (Docker and AWS CLI)
+    - name: Ensure system dependencies are installed
       apt:
         name:
-          - docker.io
-          - awscli
+          - curl
+          - sudo
         state: present
-        update_cache: yes
+        update_cache: true
+      when: ansible_os_family == "Debian"
 
-    - name: Ensure Docker service is started and enabled
-      service:
-        name: docker
-        state: started
-        enabled: yes
-
-    - name: Create world data directory which will be mounted as a volume
-      file:
-        path: "{{ mount_data_path }}"
-        state: directory
-        mode: '0755'
-        owner: ubuntu
-        group: ubuntu
-
-    - name: Authenticate Docker to ECR using Instance Profile
+    - name: Download and run k3s installation script
       shell: |
-        aws ecr get-login-password --region {{ aws_region }} | \
-        docker login --username AWS --password-stdin {{ ecr_url }}
-      changed_when: false
-
-    - name: Pull pinned Minecraft image from ECR
-      community.docker.docker_image:
-        name: "{{ ecr_url }}:{{ ecr_image_tag }}"
-        source: pull
-
-    - name: Pull and extract world data backup from S3
-      ansible.builtin.include_role:
-        name: backups
-      vars:
-        s3_bucket_name: "{{ s3_bucket_name }}"
-        data_destination_path: "{{ mount_data_path }}"
-        temp_backup_path: "/tmp/restore.tar"
-        user: "ubuntu"
-
-    - name: Start Minecraft server container
-      community.docker.docker_container:
-        name: minecraft-server
-        image: "{{ ecr_url }}:{{ ecr_image_tag }}"
-        state: started
-        restart_policy: always
-        published_ports:
-          - "25565:25565"
-        volumes:
-          - "{{ mount_data_path }}{{ world_data_path }}:{{ world_data_path }}:rw"
-        env:
-          MOTD: "{{ motd }}"
+        curl -sfL https://get.k3s.io | sh -
+      args:
+        creates: /usr/local/bin/k3s # Prevents rerun if k3s is already installed

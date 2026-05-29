@@ -14,61 +14,61 @@ provider "aws" {
 }
 
 # Create VPC
-resource "aws_vpc" "ops3" {
+resource "aws_vpc" "ops4" {
   cidr_block           = "10.0.0.0/16"
   enable_dns_hostnames = true
 
   tags = {
-    Name = "ops3-vpc"
+    Name = "ops4-vpc"
   }
 }
 
 # Create subnet
-resource "aws_subnet" "ops3_public" {
-  vpc_id                  = aws_vpc.ops3.id
+resource "aws_subnet" "ops4_public" {
+  vpc_id                  = aws_vpc.ops4.id
   cidr_block              = "10.0.1.0/24"
   availability_zone       = "us-east-1a"
   map_public_ip_on_launch = true
 
   tags = {
-    Name = "ops3-public-subnet"
+    Name = "ops4-public-subnet"
   }
 }
 
 # Create IGW
-resource "aws_internet_gateway" "ops3_igw" {
-  vpc_id = aws_vpc.ops3.id
+resource "aws_internet_gateway" "ops4_igw" {
+  vpc_id = aws_vpc.ops4.id
 
   tags = {
-    Name = "ops3-igw"
+    Name = "ops4-igw"
   }
 }
 
 # Create route table
-resource "aws_route_table" "ops3_public_rt" {
-  vpc_id = aws_vpc.ops3.id
+resource "aws_route_table" "ops4_public_rt" {
+  vpc_id = aws_vpc.ops4.id
 
   route {
     cidr_block = "0.0.0.0/0"
-    gateway_id = aws_internet_gateway.ops3_igw.id
+    gateway_id = aws_internet_gateway.ops4_igw.id
   }
 
   tags = {
-    Name = "ops3-public-rt"
+    Name = "ops4-public-rt"
   }
 }
 
 # Create route table association
-resource "aws_route_table_association" "ops3_public_rta" {
-  subnet_id      = aws_subnet.ops3_public.id
-  route_table_id = aws_route_table.ops3_public_rt.id
+resource "aws_route_table_association" "ops4_public_rta" {
+  subnet_id      = aws_subnet.ops4_public.id
+  route_table_id = aws_route_table.ops4_public_rt.id
 }
 
 # Security Group rule: SSH for admin access and TCP 25565 for Minecraft clients
-resource "aws_security_group" "ops3_minecraft_sg" {
+resource "aws_security_group" "ops4_minecraft_sg" {
   name        = "op3-minecraft-sg"
   description = "SSH for admin access and TCP 25565 for Minecraft clients"
-  vpc_id      = aws_vpc.ops3.id
+  vpc_id      = aws_vpc.ops4.id
 
   ingress {
     description = "SSH"
@@ -95,22 +95,22 @@ resource "aws_security_group" "ops3_minecraft_sg" {
   }
 
   tags = {
-    Name = "ops3-minecraft-sg"
+    Name = "ops4-minecraft-sg"
   }
 }
 
 
 # Create node
-resource "aws_instance" "ops3_minecraft_node" {
+resource "aws_instance" "ops4_minecraft_node" {
   ami                    = var.ami_id
   instance_type          = var.instance_type
   key_name               = var.key_name
-  vpc_security_group_ids = [aws_security_group.ops3_minecraft_sg.id]
+  vpc_security_group_ids = [aws_security_group.ops4_minecraft_sg.id]
   iam_instance_profile   = "LabInstanceProfile"
-  subnet_id = aws_subnet.ops3_public.id
+  subnet_id = aws_subnet.ops4_public.id
 
   tags = {
-    Name = "ops3-minecraft-node"
+    Name = "ops4-minecraft-node"
   }
 }
 
@@ -124,7 +124,7 @@ locals {
 
 resource "null_resource" "ansible_bridge" {
   # Ensure this only runs AFTER the instance is up
-  depends_on = [aws_instance.ops3_minecraft_node]
+  depends_on = [aws_instance.ops4_minecraft_node]
   # Rerun if playbook has been changed
   triggers = {
     playbook_hash = filesha256("playbook.yml")
@@ -138,14 +138,14 @@ resource "null_resource" "ansible_bridge" {
       type        = "ssh"
       user        = "ubuntu"
       private_key = file(var.ssh_key_path)
-      host        = aws_instance.ops3_minecraft_node.public_ip
+      host        = aws_instance.ops4_minecraft_node.public_ip
     }
   }
 
   # Now that SSH is confirmed, run Ansible locally
   provisioner "local-exec" {
     command = <<EOT
-      ansible-playbook -i '${aws_instance.ops3_minecraft_node.public_ip},' \
+      ansible-playbook -i '${aws_instance.ops4_minecraft_node.public_ip},' \
       --private-key ${var.ssh_key_path} \
       --extra-vars "aws_account_id=${local.account_id} ecr_url=${var.ecr_url} s3_bucket_name=${var.s3_bucket} ecr_repo_name=${var.repo_name} ecr_image_tag=${var.image_tag}" \
       playbook.yml
