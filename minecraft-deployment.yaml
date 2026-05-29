@@ -18,8 +18,7 @@ spec:
     spec:
       containers:
         - name: minecraft
-          # TODO: Replace with your actual full AWS ECR registry path
-          image: 964324548466.dkr.ecr.us-east-1.amazonaws.com/ops3-ecr/v2.0.2
+          image: 964324548466.dkr.ecr.us-east-1.amazonaws.com/ops3-ecr:v2.0.2
           imagePullPolicy: IfNotPresent
           env:
             - name: MOTD
