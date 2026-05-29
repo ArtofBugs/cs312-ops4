@@ -44,9 +44,13 @@ spec:
 
           # Readiness probe: Only checks after startupProbe succeeds
           readinessProbe:
-            tcpSocket:
-              port: 25565
-            periodSeconds: 10
+            exec:
+              command:
+                - /bin/sh
+                - -c
+                - grep -q "Done" /opt/minecraft/logs/latest.log
+            initialDelaySeconds: 0
+            periodSeconds: 5  # Check frequently immediately after startup finishes
             failureThreshold: 2
 
           # Liveness probe: Only checks after startupProbe succeeds
